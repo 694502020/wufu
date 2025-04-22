@@ -3,7 +3,25 @@
     <!-- 顶部搜索区域 -->
     <view class="search-area">
       <view class="search-box">
-        <text class="search-icon">🔍</text>
+        <!-- 搜索引擎选择器 -->
+        <view class="search-engine-selector" @click="toggleSearchEngines">
+          <image :src="currentSearchEngine.icon" class="search-engine-icon"></image>
+          <view class="search-engine-arrow">▼</view>
+          
+          <!-- 搜索引擎下拉菜单 -->
+          <view class="search-engine-dropdown" v-if="showSearchEngines">
+            <view 
+              v-for="(engine, idx) in searchEngines" 
+              :key="idx"
+              class="search-engine-option"
+              @click.stop="selectSearchEngine(engine)"
+            >
+              <image :src="engine.icon" class="search-engine-option-icon"></image>
+              <text class="search-engine-option-name">{{ engine.name }}</text>
+            </view>
+          </view>
+        </view>
+        
         <input 
           class="search-input" 
           v-model="searchValue" 
@@ -24,11 +42,15 @@
           v-for="(link, index) in navLinks"
           :key="index"
           class="nav-link"
-          @click="goToUrl(link.url)"
           :class="{ 'custom-link': link.isCustom }"
         >
-          <image :src="link.icon" class="nav-icon"></image>
-          <text class="nav-text">{{ link.title }}</text>
+          <view class="nav-link-content" @click="goToUrl(link.url)">
+            <image :src="link.icon" class="nav-icon"></image>
+            <text class="nav-text">{{ link.title }}</text>
+          </view>
+          
+          <!-- 删除按钮 -->
+          <view class="delete-btn" @click="deleteNavLink(index)">×</view>
         </view>
         
         <!-- 添加自定义导航按钮 -->
@@ -38,6 +60,7 @@
         </view>
       </view>
     </view>
+
 
     <!-- 添加自定义导航的弹窗 -->
     <view class="modal-overlay" v-if="showAddModal" @click="showAddModal = false">
@@ -60,15 +83,27 @@
           
           <view class="form-item">
             <text class="form-label">图标选择</text>
-            <view class="icon-selector">
-              <view 
-                v-for="(icon, idx) in defaultIcons" 
-                :key="idx"
-                class="icon-option"
-                :class="{ 'selected': newLink.icon === icon }"
-                @click="newLink.icon = icon"
-              >
-                <image :src="icon" class="icon-preview"></image>
+            <view class="icon-options">
+              <!-- 默认图标选择 -->
+              <view class="icon-selector">
+                <view 
+                  v-for="(icon, idx) in defaultIcons" 
+                  :key="idx"
+                  class="icon-option"
+                  :class="{ 'selected': newLink.icon === icon }"
+                  @click="newLink.icon = icon"
+                >
+                  <image :src="icon" class="icon-preview"></image>
+                </view>
+              </view>
+              
+              <!-- 上传自定义图标 -->
+              <view class="upload-custom-icon">
+                <button class="upload-icon-btn" @click="uploadCustomIcon">上传自定义图标</button>
+                <view class="custom-icon-preview" v-if="newLink.icon && !defaultIcons.includes(newLink.icon)">
+                  <image :src="newLink.icon" class="icon-preview"></image>
+                  <text class="preview-text">预览</text>
+                </view>
               </view>
             </view>
           </view>
@@ -102,55 +137,55 @@ export default {
       ],
       navLinks: [
         {
-          icon: '/static/douyin.png',
+          icon: '/static/douyin.ico',
           title: '抖音',
           url: 'https://www.douyin.com/',
           isCustom: false
         },
         {
-          icon: '/static/taobao.png',
+          icon: '/static/tb.jpeg',
           title: '淘宝',
           url: 'https://www.taobao.com/',
           isCustom: false
         },
         {
-          icon: '/static/jd.png',
+          icon: '/static/jindon.ico',
           title: '京东',
           url: 'https://www.jd.com',
           isCustom: false
         },
         {
           icon: '/static/fujian.png',
-          title: '福健网',
-          url: 'http://www.fjplus.cn',
+          title: '女性工具',
+          url: 'http://www.fjplus.cn/zhuye-gongnen/gongju/index.html',
           isCustom: false
         },
         {
-          icon: '/static/sohu.png',
+          icon: '/static/souhu.ico',
           title: '搜狐健康',
           url: 'http://health.sohu.com/',
           isCustom: false
         },
         {
-          icon: '/static/weibo.png',
+          icon: '/static/weibo.ico',
           title: '微博',
           url: 'https://weibo.com/',
           isCustom: false
         },
         {
-          icon: '/static/mgtv.png',
+          icon: '/static/mangguotv.ico',
           title: '芒果TV',
           url: 'https://www.mgtv.com/',
           isCustom: false
         },
         {
-          icon: '/static/iqiyi.png',
+          icon: '/static/aiqy.ico',
           title: '爱奇艺',
           url: 'http://www.iqiyi.com',
           isCustom: false
         },
         {
-          icon: '/static/youku.png',
+          icon: '/static/youku.ico',
           title: '优酷',
           url: 'http://www.youku.com',
           isCustom: false
@@ -162,34 +197,68 @@ export default {
           isCustom: false
         },
         {
-          icon: '/static/vip.png',
+          icon: '/static/vip.ico',
           title: '唯品会',
           url: 'https://www.vip.com/',
           isCustom: false
         },
         {
-          icon: '/static/mama.png',
+          icon: '/static/mmw.jpeg',
           title: '妈妈网',
           url: 'http://www.mama.cn/',
           isCustom: false
         },
         {
-          icon: '/static/pclady.png',
+          icon: '/static/shishang.ico',
           title: 'PCLady',
           url: 'http://www.pclady.com.cn/',
           isCustom: false
         },
         {
-          icon: '/static/rayli.png',
+          icon: '/static/ruili.jpeg',
           title: '瑞丽时尚',
           url: 'https://www.rayli.com.cn/channel/video/shishang',
           isCustom: false
         },
         {
-          icon: '/static/mogu.png',
+          icon: '/static/mogu.jpeg',
           title: '蘑菇街',
           url: 'https://m.mogu.com/?ptp=32.v5mL0b.0.0.GPPXOpre',
           isCustom: false
+        }
+      ],
+      // 搜索引擎相关数据
+      currentSearchEngine: {
+        name: '必应',
+        icon: '/static/biying.png',
+        searchUrl: 'https://www.bing.com/search?q='
+      },
+      showSearchEngines: false,
+      searchEngines: [
+        {
+          name: '百度',
+          icon: '/static/baidu.ico',
+          searchUrl: 'https://www.baidu.com/s?wd='
+        },
+        {
+          name: '必应',
+          icon: '/static/biying.ico',
+          searchUrl: 'https://www.bing.com/search?q='
+        },
+        {
+          name: 'Google',
+          icon: '/static/guge.jpeg',
+          searchUrl: 'https://www.google.com/search?q='
+        },
+        {
+          name: '360',
+          icon: '/static/360.ico',
+          searchUrl: 'https://www.so.com/s?q='
+        },
+        {
+          name: '搜狗',
+          icon: '/static/sougou.ico',
+          searchUrl: 'https://www.sogou.com/web?query='
         }
       ]
     };
@@ -201,26 +270,48 @@ export default {
       if (customLinks) {
         this.navLinks = [...this.navLinks, ...JSON.parse(customLinks)];
       }
+      
+      // 加载上次使用的搜索引擎
+      const lastSearchEngine = uni.getStorageSync('lastSearchEngine');
+      if (lastSearchEngine) {
+        this.currentSearchEngine = JSON.parse(lastSearchEngine);
+      }
     } catch (e) {
-      console.error('Failed to load custom links:', e);
+      console.error('Failed to load data from storage:', e);
     }
   },
   methods: {
+    // 切换搜索引擎显示状态
+    toggleSearchEngines() {
+      this.showSearchEngines = !this.showSearchEngines;
+    },
+    
+    // 选择搜索引擎
+    selectSearchEngine(engine) {
+      this.currentSearchEngine = engine;
+      this.showSearchEngines = false;
+      
+      // 保存到本地存储
+      try {
+        uni.setStorageSync('lastSearchEngine', JSON.stringify(this.currentSearchEngine));
+      } catch (e) {
+        console.error('Failed to save search engine:', e);
+      }
+    },
+    
     search() {
       if (!this.searchValue.trim()) return;
       
       const searchKeyword = this.searchValue;
-      const bingSearchUrl = `https://www.bing.com/search?q=${encodeURIComponent(searchKeyword)}`;
+      const searchUrl = `${this.currentSearchEngine.searchUrl}${encodeURIComponent(searchKeyword)}`;
       
-      // 在uni-app中，使用plus.runtime.openURL或uni.navigateTo等方法
-      // 根据实际运行环境选择
       // 网页环境
       if (typeof window !== 'undefined') {
-        window.open(bingSearchUrl, '_blank');
+        window.open(searchUrl, '_blank');
       } 
       // App环境
       else if (typeof plus !== 'undefined') {
-        plus.runtime.openURL(bingSearchUrl);
+        plus.runtime.openURL(searchUrl);
       }
     },
     
@@ -231,6 +322,27 @@ export default {
       } else if (typeof plus !== 'undefined') {
         plus.runtime.openURL(url);
       }
+    },
+    
+    // 上传自定义图标
+    uploadCustomIcon() {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+          const tempFilePath = res.tempFilePaths[0];
+          
+          // 在真实应用中，您可能需要将图片上传到服务器
+          // 这里简单处理，直接使用临时路径
+          this.newLink.icon = tempFilePath;
+          
+          uni.showToast({
+            title: '图标已选择',
+            icon: 'success'
+          });
+        }
+      });
     },
     
     addCustomLink() {
@@ -284,6 +396,34 @@ export default {
         title: '添加成功',
         icon: 'success'
       });
+    },
+    
+    // 删除导航链接
+    deleteNavLink(index) {
+      // 确认是否删除
+      uni.showModal({
+        title: '确认删除',
+        content: '确定要删除这个网址吗？',
+        success: (res) => {
+          if (res.confirm) {
+            // 删除链接
+            this.navLinks.splice(index, 1);
+            
+            // 更新存储
+            try {
+              const customLinks = this.navLinks.filter(link => link.isCustom);
+              uni.setStorageSync('customNavLinks', JSON.stringify(customLinks));
+              
+              uni.showToast({
+                title: '删除成功',
+                icon: 'success'
+              });
+            } catch (e) {
+              console.error('Failed to save custom links:', e);
+            }
+          }
+        }
+      });
     }
   }
 };
@@ -315,6 +455,63 @@ export default {
   border-radius: 6px;
   padding: 0 10px;
   margin-right: 10px;
+}
+
+/* 搜索引擎选择器样式 */
+.search-engine-selector {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  margin-right: 8px;
+  border-right: 1px solid #ddd;
+  position: relative;
+  cursor: pointer;
+  height: 40px;
+}
+
+.search-engine-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+
+.search-engine-arrow {
+  font-size: 12px;
+  color: #999;
+}
+
+.search-engine-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 120px;
+  z-index: 100;
+  padding: 8px 0;
+}
+
+.search-engine-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.search-engine-option:hover {
+  background-color: #f5f5f5;
+}
+
+.search-engine-option-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.search-engine-option-name {
+  font-size: 14px;
+  color: #333;
 }
 
 .search-icon {
@@ -377,6 +574,14 @@ export default {
   position: relative;
 }
 
+.nav-link-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
 .nav-icon {
   width: 50px;
   height: 50px;
@@ -393,6 +598,29 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 删除按钮样式 */
+.delete-btn {
+  position: absolute;
+  top: -8px;
+  right: 4vw;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ff4d4f;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.nav-link:hover .delete-btn {
+  opacity: 1;
 }
 
 .add-icon {
@@ -485,11 +713,15 @@ export default {
   font-size: 14px;
 }
 
+.icon-options {
+  margin-top: 10px;
+}
+
 .icon-selector {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 10px;
+  margin-bottom: 15px;
 }
 
 .icon-option {
@@ -512,6 +744,34 @@ export default {
   height: 30px;
 }
 
+/* 上传自定义图标样式 */
+.upload-custom-icon {
+  margin-top: 10px;
+}
+
+.upload-icon-btn {
+  background-color: #f5f5f5;
+  border: 1px dashed #ddd;
+  color: #666;
+  width: 100%;
+  height: 40px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.custom-icon-preview {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.preview-text {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
 .add-button {
   background-color: #3e99f5;
   color: white;
@@ -527,6 +787,18 @@ export default {
 @media screen and (max-width: 480px) {
   .nav-link {
     width: 33.33%;
+  }
+  
+  .search-engine-selector {
+    padding: 0 5px;
+  }
+  
+  .search-engine-icon {
+    margin-right: 0;
+  }
+  
+  .search-engine-arrow {
+    display: none;
   }
 }
 
@@ -547,6 +819,10 @@ export default {
   
   .search-button {
     width: 100%;
+  }
+  
+  .search-engine-dropdown {
+    left: -10px;
   }
 }
 </style>
